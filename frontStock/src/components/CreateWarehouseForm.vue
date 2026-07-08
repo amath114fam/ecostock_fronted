@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { createWarehouse } from '../services/warehouseService.js'
 
+const emit = defineEmits(['created'])
+
 const name = ref('')
 const location = ref('')
 const capacity = ref('')
@@ -21,6 +23,7 @@ async function handleSubmit() {
     name.value = ''
     location.value = ''
     capacity.value = ''
+    emit('created')
   } catch (error) {
     errorMessage.value = 'Erreur lors de la création de l\'entrepôt.'
   } finally {
@@ -32,15 +35,27 @@ async function handleSubmit() {
 <template>
   <form class="create-form" @submit.prevent="handleSubmit">
     <h2>Nouvel entrepôt</h2>
+    <p class="form-hint">Renseignez les informations de l'entrepôt à ajouter.</p>
 
-    <input v-model="name" type="text" placeholder="Nom" class="input-field" />
-    <input v-model="location" type="text" placeholder="Localisation" class="input-field" />
-    <input v-model="capacity" type="number" placeholder="Capacité" class="input-field" />
+    <label class="field">
+      <span class="field-label">Nom</span>
+      <input v-model="name" type="text" placeholder="Ex. Entrepôt Nord" class="input-field" />
+    </label>
+
+    <label class="field">
+      <span class="field-label">Localisation</span>
+      <input v-model="location" type="text" placeholder="Ex. Dakar, Sénégal" class="input-field" />
+    </label>
+
+    <label class="field">
+      <span class="field-label">Capacité</span>
+      <input v-model="capacity" type="number" placeholder="Ex. 500" class="input-field" />
+    </label>
 
     <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
     <button type="submit" class="btn-primary" :disabled="isLoading">
-      {{ isLoading ? 'Création...' : 'Créer' }}
+      {{ isLoading ? 'Création...' : 'Créer l\'entrepôt' }}
     </button>
   </form>
 </template>
@@ -49,26 +64,47 @@ async function handleSubmit() {
 .create-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-width: 320px;
+  gap: 1rem;
+  max-width: 420px;
   background-color: #FFFFFF;
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  margin-bottom: 1.5rem;
+  box-sizing: border-box;
 }
 
 .create-form h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.2rem;
-  color: #2F5D4E;
+  margin: 0;
+  font-size: 1.15rem;
+  color: #232323;
+}
+
+.form-hint {
+  margin: -0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #5a5a5a;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #232323;
 }
 
 .input-field {
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.75rem;
   border: 1px solid #d8d3c9;
   border-radius: 6px;
   font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
 .input-field:focus {
@@ -88,10 +124,18 @@ async function handleSubmit() {
   transition: background-color 0.15s ease;
 }
 
+.btn-primary:hover:not(:disabled) {
+  background-color: #264a3e;
+}
+
+.btn-primary:disabled {
+  background-color: #a8b8b3;
+  cursor: not-allowed;
+}
+
 .error-message {
   color: #B5502F;
   font-size: 0.85rem;
   margin: 0;
 }
-
 </style>

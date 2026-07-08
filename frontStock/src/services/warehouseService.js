@@ -31,3 +31,28 @@ export async function createWarehouse(warehouseData) {
 
   return await response.json()
 }
+
+
+export async function updateWarehouse(id, data) {
+  const response = await authFetch(`${API_URL}/warehouse/${id}/`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    throw new Error('Erreur lors de la mise à jour de l\'entrepôt')
+  }
+
+  return response.json()
+}
+
+export async function deleteWarehouse(id) {
+  const response = await authFetch(`${API_URL}/warehouse/${id}/`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    throw new Error('Erreur lors de la suppression de l\'entrepôt')
+  }
+
+}
