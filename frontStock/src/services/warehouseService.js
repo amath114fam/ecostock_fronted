@@ -2,6 +2,7 @@ import { authFetch } from './authService.js'
 
 const API_URL = 'http://localhost:8000/api'
 
+// Récupère la liste des entrepôts depuis l'API
 export async function fetchWarehouses() {
   try {
     const response = await fetch(`${API_URL}/warehouse/`)
@@ -17,7 +18,7 @@ export async function fetchWarehouses() {
   }
 }
 
-
+// Crée un nouvel entrepôt en envoyant les données à l'API
 export async function createWarehouse(warehouseData) {
   const response = await authFetch(`${API_URL}/warehouse/`, {
     method: 'POST',
@@ -32,7 +33,7 @@ export async function createWarehouse(warehouseData) {
   return await response.json()
 }
 
-
+// Met à jour un entrepôt existant en envoyant les données à l'API
 export async function updateWarehouse(id, data) {
   const response = await authFetch(`${API_URL}/warehouse/${id}/`, {
     method: 'PUT',
@@ -46,6 +47,7 @@ export async function updateWarehouse(id, data) {
   return response.json()
 }
 
+// Supprime un entrepôt en envoyant une requête DELETE à l'API
 export async function deleteWarehouse(id) {
   const response = await authFetch(`${API_URL}/warehouse/${id}/`, {
     method: 'DELETE',

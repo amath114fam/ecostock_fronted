@@ -15,6 +15,7 @@ const emit = defineEmits(['saved'])
 
 const isEditMode = !!props.product
 
+// Mêmes valeurs ETAT supposées que dans ProductDetailsModal.vue  à garder synchronisées.
 const ETAT_CHOICES = [
   { value: 'disponible', label: 'Disponible' },
   { value: 'rupture', label: 'Rupture de stock' },
@@ -33,6 +34,7 @@ const warehouses = ref([])
 const warehousesError = ref('')
 const isLoadingWarehouses = ref(false)
 
+// charge la liste des entrepôts pour le select
 async function loadWarehouses() {
   isLoadingWarehouses.value = true
   warehousesError.value = ''
@@ -46,10 +48,13 @@ async function loadWarehouses() {
   }
 }
 
+// Charge la liste des entrepôts au montage du composant
 onMounted(() => {
   loadWarehouses()
 })
 
+
+// Gestion de la soumission du formulaire
 async function handleSubmit() {
   isLoading.value = true
   errorMessage.value = ''
@@ -107,7 +112,7 @@ async function handleSubmit() {
       <span class="field-label">Entrepôt</span>
       <select v-model="warehouseId" class="input-field select-field" :disabled="isLoadingWarehouses">
         <option value="" disabled>
-          {{ isLoadingWarehouses ? 'Chargement des entrepôts...' : 'Choisir un entrepôt' }}
+          Choisir un entrepôt
         </option>
         <option v-for="warehouse in warehouses" :key="warehouse.id" :value="warehouse.id">
           {{ warehouse.nom }}

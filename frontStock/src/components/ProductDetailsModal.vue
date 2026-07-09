@@ -12,11 +12,11 @@ const props = defineProps({
 
 defineEmits(['close'])
 
-// ⚠️ Mêmes valeurs ETAT supposées que dans CreateProductForm.vue — à garder synchronisées.
+//Mêmes valeurs ETAT supposées que dans CreateProductForm.vue — à garder synchronisées.
 const ETAT_LABELS = {
   disponible: 'Disponible',
   rupture: 'Rupture de stock',
-  perime: 'Périmé',
+  perimer: 'Périmé',
 }
 
 function etatLabel(value) {

@@ -14,30 +14,37 @@ const activeView = ref('dashboard') // 'dashboard' | 'entrepots' | 'produits'
 const showForm = ref(false)
 const warehouseListKey = ref(0)
 const productListKey = ref(0)
+const warehouseSearch = ref('')
+const productSearch = ref('')
 
+// Gère l'événement de connexion réussie
 function handleLoggedIn() {
   isAuthenticated.value = true
 }
 
+// Gère la déconnexion de l'utilisateur
 function handleLogout() {
   logout()
   isAuthenticated.value = false
 }
-
+// Change la vue active dans le tableau de bord
 function changeView(view) {
   activeView.value = view
   showForm.value = false
 }
 
+// Bascule l'affichage du formulaire
 function toggleForm() {
   showForm.value = !showForm.value
 }
 
+// Gère la création d'un nouvel entrepôt
 function handleWarehouseCreated() {
   showForm.value = false
   warehouseListKey.value++
 }
 
+// Gère la création d'un nouveau produit
 function handleProductCreated() {
   showForm.value = false
   productListKey.value++
@@ -83,6 +90,28 @@ function handleProductCreated() {
           </p>
         </div>
 
+        <div v-if="activeView === 'entrepots' && !showForm" class="header-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            v-model="warehouseSearch"
+            type="text"
+            placeholder="Rechercher un entrepôt..."
+            class="search-input"
+          />
+          <button
+            v-if="warehouseSearch"
+            type="button"
+            class="search-clear"
+            aria-label="Effacer la recherche"
+            @click="warehouseSearch = ''"
+          >
+            ✕
+          </button>
+        </div>
+
         <button v-if="activeView !== 'dashboard'" class="btn-add" @click="toggleForm">
           {{
             showForm
@@ -98,13 +127,34 @@ function handleProductCreated() {
         <DashboardHome v-if="activeView === 'dashboard'" />
 
         <template v-else-if="activeView === 'entrepots'">
-          <CreateWarehouseForm v-if="showForm" @created="handleWarehouseCreated" />
-          <WarehouseList v-else :key="warehouseListKey" />
+          <CreateWarehouseForm v-if="showForm" @saved="handleWarehouseCreated" />
+          <WarehouseList v-else :key="warehouseListKey" :search="warehouseSearch" />
         </template>
 
         <template v-else>
+          <div class="header-search product-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              v-model="productSearch"
+              type="text"
+              placeholder="Rechercher un produit..."
+              class="search-input"
+            />
+            <button
+              v-if="productSearch"
+              type="button"
+              class="search-clear"
+              aria-label="Effacer la recherche"
+              @click="productSearch = ''"
+            >
+              ✕
+            </button>
+          </div>
           <CreateProductForm v-if="showForm" @saved="handleProductCreated" />
-          <ProductList v-else :key="productListKey" />
+          <ProductList v-else :key="productListKey" :search="productSearch" />
         </template>
       </main>
     </div>
@@ -151,6 +201,55 @@ function handleProductCreated() {
   color: #5a5a5a;
 }
 
+.header-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #FFFFFF;
+  border: 1px solid #d8d3c9;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  color: #5a5a5a;
+}
+
+.header-search:focus-within {
+  border-color: #2F5D4E;
+  outline: 2px solid #2F5D4E;
+  outline-offset: 1px;
+}
+
+.header-search svg {
+  flex-shrink: 0;
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #232323;
+  width: 100%;
+}
+
+.search-clear {
+  border: none;
+  background: transparent;
+  color: #5a5a5a;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0.15rem;
+  flex-shrink: 0;
+}
+
+.search-clear:hover {
+  color: #B5502F;
+}
+
 .btn-add {
   background-color: #2F5D4E;
   color: #FFFFFF;
@@ -166,6 +265,10 @@ function handleProductCreated() {
 
 .btn-add:hover {
   background-color: #264a3e;
+}
+
+.product-search {
+  margin-bottom: 1.25rem;
 }
 
 @media (max-width: 768px) {
@@ -201,6 +304,12 @@ function handleProductCreated() {
 
   .content-header {
     margin-bottom: 1.25rem;
+  }
+
+  .header-search {
+    max-width: none;
+    order: 3;
+    flex-basis: 100%;
   }
 
   .btn-add {

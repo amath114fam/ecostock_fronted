@@ -1,13 +1,27 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { Bar } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+} from 'chart.js'
 import { fetchProducts } from '../services/ProductService.js'
 import { fetchWarehouses } from '../services/warehouseService.js'
+
+// Enregistre les composants nécessaires pour Chart.js
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 const products = ref([])
 const warehouses = ref([])
 const errorMessage = ref('')
 const isLoading = ref(false)
 
+// Charge les données des produits et des entrepôts pour le tableau de bord
 async function loadData() {
   isLoading.value = true
   errorMessage.value = ''
@@ -30,6 +44,7 @@ onMounted(() => {
   loadData()
 })
 
+// Calcul des statistiques pour le tableau de bord
 const totalProducts = computed(() => products.value.length)
 
 const availableCount = computed(
@@ -44,6 +59,7 @@ const expiredCount = computed(
   () => products.value.filter((product) => product.etat === 'perimer').length
 )
 
+// Prépare les données pour les cartes de résumé et le graphique
 const summaryCards = computed(() => [
   {
     key: 'total',
@@ -75,6 +91,7 @@ const summaryCards = computed(() => [
   },
 ])
 
+// Calcul des statistiques par entrepôt pour le graphique
 const warehouseStats = computed(() =>
   warehouses.value.map((warehouse) => {
     const warehouseProducts = products.value.filter(
@@ -84,7 +101,6 @@ const warehouseStats = computed(() =>
     return {
       id: warehouse.id,
       nom: warehouse.nom,
-      localisation: warehouse.localisation,
       total: warehouseProducts.length,
       disponible: warehouseProducts.filter((p) => p.etat === 'disponible').length,
       rupture: warehouseProducts.filter((p) => p.etat === 'rupture').length,
@@ -92,6 +108,41 @@ const warehouseStats = computed(() =>
     }
   })
 )
+
+// Prépare les données et les options pour le graphique à barres
+const chartData = computed(() => ({
+  labels: warehouseStats.value.map((w) => w.nom),
+  datasets: [
+    {
+      label: 'Disponibles',
+      backgroundColor: '#2F5D4E',
+      data: warehouseStats.value.map((w) => w.disponible),
+    },
+    {
+      label: 'En rupture',
+      backgroundColor: '#d8a24a',
+      data: warehouseStats.value.map((w) => w.rupture),
+    },
+    {
+      label: 'Périmés',
+      backgroundColor: '#B5502F',
+      data: warehouseStats.value.map((w) => w.perime),
+    },
+  ],
+}))
+
+// Options pour le graphique à barres
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: { stacked: true, grid: { display: false } },
+    y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+  },
+  plugins: {
+    legend: { position: 'bottom' },
+  },
+}
 </script>
 
 <template>
@@ -138,21 +189,9 @@ const warehouseStats = computed(() =>
           <span>Crée un entrepôt pour voir apparaître sa répartition de stock ici.</span>
         </div>
 
-        <ul v-else class="warehouse-grid">
-          <li v-for="warehouse in warehouseStats" :key="warehouse.id" class="warehouse-card">
-            <div class="warehouse-card-header">
-              <h3>{{ warehouse.nom }}</h3>
-              <span class="total-badge">{{ warehouse.total }} produit(s)</span>
-            </div>
-            <p v-if="warehouse.localisation" class="warehouse-location">{{ warehouse.localisation }}</p>
-
-            <div class="mini-stats">
-              <span class="mini-stat mini-positive">{{ warehouse.disponible }} disponibles</span>
-              <span class="mini-stat mini-warning">{{ warehouse.rupture }} en rupture</span>
-              <span class="mini-stat mini-warning">{{ warehouse.perime }} périmés</span>
-            </div>
-          </li>
-        </ul>
+        <div v-else class="chart-container">
+          <Bar :data="chartData" :options="chartOptions" />
+        </div>
       </section>
     </template>
   </div>
@@ -214,73 +253,13 @@ const warehouseStats = computed(() =>
   color: #232323;
 }
 
-.warehouse-grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1rem;
-}
-
-.warehouse-card {
+.chart-container {
   background-color: #FFFFFF;
   border-radius: 10px;
-  padding: 1.1rem 1.25rem;
+  padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border-left: 4px solid #2F5D4E;
-}
-
-.warehouse-card-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.warehouse-card-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  color: #232323;
-}
-
-.total-badge {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #2F5D4E;
-  background-color: #FAF7F2;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.warehouse-location {
-  margin: 0.25rem 0 0.75rem;
-  font-size: 0.85rem;
-  color: #5a5a5a;
-}
-
-.mini-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.mini-stat {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
-}
-
-.mini-positive {
-  color: #2F5D4E;
-  background-color: #eaf1ee;
-}
-
-.mini-warning {
-  color: #B5502F;
-  background-color: #f7e9e3;
+  height: 360px;
+  box-sizing: border-box;
 }
 
 .error-message {

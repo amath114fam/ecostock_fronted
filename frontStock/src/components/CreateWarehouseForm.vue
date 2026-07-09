@@ -1,31 +1,53 @@
 <script setup>
 import { ref } from 'vue'
-import { createWarehouse } from '../services/warehouseService.js'
+import { createWarehouse, updateWarehouse } from '../services/warehouseService.js'
 
-const emit = defineEmits(['created'])
+// Props et emits pour le composant
+const props = defineProps({
+  warehouse: {
+    type: Object,
+    default: null,
+  },
+})
 
-const name = ref('')
-const location = ref('')
-const capacity = ref('')
+const emit = defineEmits(['saved'])
+
+const isEditMode = !!props.warehouse
+
+const name = ref(props.warehouse?.nom ?? '')
+const location = ref(props.warehouse?.localisation ?? '')
+const capacity = ref(props.warehouse?.capacite ?? '')
 const errorMessage = ref('')
 const isLoading = ref(false)
 
+// Gestion de la soumission du formulaire
 async function handleSubmit() {
   isLoading.value = true
   errorMessage.value = ''
 
+  // Prépare les données à envoyer au backend
+  const payload = {
+    nom: name.value,
+    localisation: location.value,
+    capacite: Number(capacity.value),
+  }
+
   try {
-    await createWarehouse({
-      nom: name.value,
-      localisation: location.value,
-      capacite: Number(capacity.value),
-    })
-    name.value = ''
-    location.value = ''
-    capacity.value = ''
-    emit('created')
+    if (isEditMode) {
+      await updateWarehouse(props.warehouse.id, payload)
+      emit('saved')
+    } else {
+      await createWarehouse(payload)
+      name.value = ''
+      location.value = ''
+      capacity.value = ''
+      emit('saved')
+    }
   } catch (error) {
-    errorMessage.value = 'Erreur lors de la création de l\'entrepôt.'
+    console.error('Erreur détaillée:', error)
+    errorMessage.value = isEditMode
+      ? 'Erreur lors de la mise à jour de l\'entrepôt.'
+      : 'Erreur lors de la création de l\'entrepôt.'
   } finally {
     isLoading.value = false
   }
@@ -34,8 +56,14 @@ async function handleSubmit() {
 
 <template>
   <form class="create-form" @submit.prevent="handleSubmit">
-    <h2>Nouvel entrepôt</h2>
-    <p class="form-hint">Renseignez les informations de l'entrepôt à ajouter.</p>
+    <h2>{{ isEditMode ? 'Modifier l\'entrepôt' : 'Nouvel entrepôt' }}</h2>
+    <p class="form-hint">
+      {{
+        isEditMode
+          ? 'Mets à jour les informations de cet entrepôt.'
+          : 'Renseignez les informations de l\'entrepôt à ajouter.'
+      }}
+    </p>
 
     <label class="field">
       <span class="field-label">Nom</span>
@@ -55,7 +83,11 @@ async function handleSubmit() {
     <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
     <button type="submit" class="btn-primary" :disabled="isLoading">
-      {{ isLoading ? 'Création...' : 'Créer l\'entrepôt' }}
+      {{
+        isLoading
+          ? (isEditMode ? 'Enregistrement...' : 'Création...')
+          : (isEditMode ? 'Enregistrer les modifications' : 'Créer l\'entrepôt')
+      }}
     </button>
   </form>
 </template>

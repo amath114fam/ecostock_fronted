@@ -1,5 +1,6 @@
 const API_URL = 'http://localhost:8000/api'
 
+//connecte l'utilisateur en envoyant les identifiants à l'API et stocke les tokens dans le localStorage
 export async function login(username, password) {
   const response = await fetch(`${API_URL}/token/`, {
     method: 'POST',
@@ -24,11 +25,13 @@ export function getAccessToken() {
   return localStorage.getItem('access_token')
 }
 
+// Déconnecte l'utilisateur en supprimant les tokens du localStorage
 export function logout() {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
 }
 
+// Vérifie si l'utilisateur est authentifié en vérifiant la présence d'un token d'accès dans le localStorage
 export async function authFetch(url, options = {}) {
   const token = getAccessToken()
 

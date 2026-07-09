@@ -9,6 +9,7 @@ const password = ref('')
 const errorMessage = ref('')
 const isLoading = ref(false)
 
+// Gestion de la soumission du formulaire de connexion
 async function handleSubmit() {
   isLoading.value = true
   errorMessage.value = ''

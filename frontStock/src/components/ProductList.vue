@@ -1,9 +1,20 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { fetchProducts, deleteProduct } from '../services/ProductService.js'
+import { ref, onMounted, computed } from 'vue'
+import { fetchProducts, deleteProduct, moveProduct } from '../services/ProductService.js'
 import { fetchWarehouses } from '../services/warehouseService.js'
 import ProductDetailsModal from './ProductDetailsModal.vue'
 import CreateProductForm from './CreateProductForm.vue'
+
+const props = defineProps({
+  search: {
+    type: String,
+    default: '',
+  },
+})
+
+const isMoving = ref(false)
+const moveError = ref('')
+const targetWarehouseId = ref('')
 
 const products = ref([])
 const warehouses = ref([])
@@ -14,6 +25,7 @@ const modalMode = ref(null)
 const isDeleting = ref(false)
 const deleteError = ref('')
 
+// Charge les produits et les entrepôts depuis le backend
 async function loadData() {
   try {
     const [productsResult, warehousesResult] = await Promise.all([
@@ -27,31 +39,37 @@ async function loadData() {
   }
 }
 
+// Charge les données au montage du composant
 onMounted(() => {
   loadData()
 })
 
+// Fonction utilitaire pour obtenir le nom de l'entrepôt à partir de son ID
 function warehouseName(id) {
   const warehouse = warehouses.value.find((item) => item.id === id)
   return warehouse ? warehouse.nom : '—'
 }
 
+// Ouvre le modal de détails pour un produit donné
 function openDetails(product) {
   activeProduct.value = product
   modalMode.value = 'details'
 }
 
+// Ouvre le modal d'édition pour un produit donné
 function openEdit(product) {
   activeProduct.value = product
   modalMode.value = 'edit'
 }
 
+// Ouvre le modal de confirmation de suppression pour un produit donné
 function openDeleteConfirm(product) {
   activeProduct.value = product
   modalMode.value = 'delete'
   deleteError.value = ''
 }
 
+// Ouvre le modal de confirmation de déplacement pour un produit donné
 function closeModal() {
 //   if (isDeleting.value) return
   activeProduct.value = null
@@ -59,11 +77,13 @@ function closeModal() {
   deleteError.value = ''
 }
 
+// Gère la sauvegarde après l'édition ou la création d'un produit
 function handleSaved() {
   closeModal()
   loadData()
 }
 
+// Confirme la suppression d'un produit
 async function confirmDelete() {
   isDeleting.value = true
   deleteError.value = ''
@@ -78,6 +98,46 @@ async function confirmDelete() {
     isDeleting.value = false
   }
 }
+
+
+// Ouvre le modal de confirmation de déplacement pour un produit donné
+function openMoveConfirm(product) {
+  activeProduct.value = product
+  modalMode.value = 'move'
+  moveError.value = ''
+  targetWarehouseId.value = ''
+}
+
+// Confirme le déplacement d'un produit vers un autre entrepôt
+async function confirmMove() {
+  isMoving.value = true
+  moveError.value = ''
+
+  try {
+    await moveProduct(activeProduct.value.id, targetWarehouseId.value)
+    closeModal()
+    loadData()
+  } catch (error) {
+    moveError.value = error.message || 'Erreur lors du déplacement du produit.'
+  } finally {
+    isMoving.value = false
+  }
+}
+
+// Filtre les produits en fonction de la recherche
+const filteredProducts = computed(() => {
+  if (!props.search) {
+    return products.value
+  }
+  console.log(products.value)
+  return products.value.filter((product) => {
+    const nameMatch = product.nom.toLowerCase().includes(props.search.toLowerCase())
+    const warehouseMatch = warehouseName(product.entrepot).toLowerCase().includes(props.search.toLowerCase())
+    return nameMatch || warehouseMatch
+  })
+})
+
+
 </script>
 
 <template>
@@ -90,7 +150,7 @@ async function confirmDelete() {
     </div>
 
     <ul v-else class="list-grid">
-      <li v-for="product in products" :key="product.id" class="card">
+      <li v-for="product in filteredProducts" :key="product.id" class="card">
         <div class="card-header">
           <div class="card-icon" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -123,6 +183,19 @@ async function confirmDelete() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
               </svg>
+            </button>
+
+            <button
+                type="button"
+                class="icon-btn"
+                title="Déplacer vers un autre entrepôt"
+                aria-label="Déplacer"
+                @click="openMoveConfirm(product)"
+                >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                </svg>
             </button>
             <button
               type="button"
@@ -178,6 +251,38 @@ async function confirmDelete() {
               {{ isDeleting ? 'Suppression...' : 'Supprimer' }}
             </button>
           </div>
+        </div>
+
+        <div v-else-if="modalMode === 'move'" class="confirm-delete">
+            <h2>Déplacer ce produit</h2>
+            <p>
+                Déplacer <strong>{{ activeProduct.nom }}</strong> vers un autre entrepôt.
+            </p>
+
+            <label class="field">
+                <span class="field-label">Entrepôt de destination</span>
+                <select v-model="targetWarehouseId" class="input-field select-field">
+                <option value="" disabled>Choisir un entrepôt</option>
+                <option
+                    v-for="warehouse in warehouses.filter(w => w.id !== activeProduct.entrepot)"
+                    :key="warehouse.id"
+                    :value="warehouse.id"
+                >
+                    {{ warehouse.nom }}
+                </option>
+                </select>
+            </label>
+
+            <p v-if="moveError" class="error-message">{{ moveError }}</p>
+
+            <div class="confirm-actions">
+                <button type="button" class="btn-secondary" :disabled="isMoving" @click="closeModal">
+                Annuler
+                </button>
+                <button type="button" class="btn-primary" :disabled="isMoving || !targetWarehouseId" @click="confirmMove">
+                {{ isMoving ? 'Déplacement...' : 'Déplacer' }}
+                </button>
+             </div>
         </div>
       </div>
     </div>
@@ -428,6 +533,60 @@ async function confirmDelete() {
 
 .btn-danger:disabled {
   background-color: #d9a894;
+  cursor: not-allowed;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+}
+
+.field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #232323;
+}
+
+.input-field {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d8d3c9;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.select-field {
+  appearance: none;
+  background-color: #FFFFFF;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235a5a5a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: #2F5D4E;
+  color: #FFFFFF;
+  border: none;
+  padding: 0.6rem 1.1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #264a3e;
+}
+
+.btn-primary:disabled {
+  background-color: #a8b8b3;
   cursor: not-allowed;
 }
 </style>

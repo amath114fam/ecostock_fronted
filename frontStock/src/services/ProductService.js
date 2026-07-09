@@ -2,6 +2,7 @@ import { authFetch } from './authService.js'
 
 const API_URL = 'http://localhost:8000/api'
 
+// Récupère la liste des produits depuis l'API
 export async function fetchProducts() {
   try {
     const response = await fetch(`${API_URL}/products/`)
@@ -17,7 +18,7 @@ export async function fetchProducts() {
   }
 }
 
-
+// Crée un nouveau produit en envoyant les données à l'API
 export async function createProduct(productData) {
   const response = await authFetch(`${API_URL}/products/`, {
     method: 'POST',
@@ -38,7 +39,7 @@ export async function createProduct(productData) {
   }
 }
 
-
+// Met à jour un produit existant en envoyant les données à l'API
 export async function updateProduct(id, data) {
   const response = await authFetch(`${API_URL}/products/${id}/`, {
     method: 'PUT',
@@ -61,4 +62,18 @@ export async function deleteProduct(id) {
     throw new Error('Erreur lors de la suppression du produit')
   }
 
+}
+
+// Déplace un produit vers un autre entrepôt en envoyant les données à l'API
+export async function moveProduct(id, newWarehouseId) {
+  const response = await authFetch(`${API_URL}/products/${id}/move/`, {
+    method: 'POST',
+    body: JSON.stringify({ newwarehouse_id: newWarehouseId }),
+  })
+
+  if (!response.ok) {
+    throw new Error(errorBody.error || 'Impossible de déplacer le produit')
+  }
+
+  return response.json()
 }
