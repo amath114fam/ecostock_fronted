@@ -18,6 +18,7 @@ const modalMode = ref(null)
 const isDeleting = ref(false)
 const deleteError = ref('')
 
+const emit = defineEmits(['updated', 'deleted'])
 
 // Charge la liste des entrepôts depuis l'API
 async function loadWarehouses() {
@@ -58,9 +59,10 @@ function closeModal() {
 }
 
 // Gère l'événement de sauvegarde après la création ou la modification d'un entrepôt
-function handleSaved() {
+function handleSaved(message) {
   closeModal()
   loadWarehouses()
+  if(message) emit('updated', message)
 }
 
 // Confirme la suppression d'un entrepôt et recharge la liste après suppression
@@ -72,6 +74,7 @@ async function confirmDelete() {
     await deleteWarehouse(activeWarehouse.value.id)
     closeModal()
     loadWarehouses()
+    emit('deleted', 'Entrepôt supprimé avec succès.')
   } catch (error) {
     deleteError.value = 'Erreur lors de la suppression de l\'entrepôt.'
   } finally {
@@ -88,6 +91,7 @@ const filteredWarehouses = computed(() => {
     warehouse.nom.toLowerCase().includes(props.search.toLowerCase())
   )
 })
+
 </script>
 
 <template>
@@ -166,7 +170,7 @@ const filteredWarehouses = computed(() => {
         />
         <template v-else-if="modalMode === 'edit'">
           <button type="button" class="modal-close" aria-label="Fermer" @click="closeModal">✕</button>
-          <CreateWarehouseForm :warehouse="activeWarehouse" @saved="handleSaved" />
+          <CreateWarehouseForm :warehouse="activeWarehouse" @updated="handleSaved" />
         </template>
         <div v-else-if="modalMode === 'delete'" class="confirm-delete">
           <h2>Supprimer cet entrepôt ?</h2>
@@ -430,5 +434,19 @@ const filteredWarehouses = computed(() => {
 .btn-danger:disabled {
   background-color: #d9a894;
   cursor: not-allowed;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #28a745;
+    /* Vert */
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    z-index: 1000;
+    opacity: 0.9;
+    transition: opacity 0.5s ease;
 }
 </style>

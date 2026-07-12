@@ -16,6 +16,14 @@ const warehouseListKey = ref(0)
 const productListKey = ref(0)
 const warehouseSearch = ref('')
 const productSearch = ref('')
+const notificationMessage = ref('')
+
+function showNotification(message) {
+  notificationMessage.value = message || ''
+  setTimeout(() => {
+    notificationMessage.value = ''
+  }, 3000)
+}
 
 // Gère l'événement de connexion réussie
 function handleLoggedIn() {
@@ -38,17 +46,44 @@ function toggleForm() {
   showForm.value = !showForm.value
 }
 
-// Gère la création d'un nouvel entrepôt
-function handleWarehouseCreated() {
-  showForm.value = false
-  warehouseListKey.value++
+function handleDelete(message){
+  if (message) showNotification(message)
+}
+function handleMove(message){
+  if (message) showNotification(message)
 }
 
-// Gère la création d'un nouveau produit
-function handleProductCreated() {
+function handleProductUpdated(message) {
   showForm.value = false
   productListKey.value++
+  if (message) showNotification(message)
 }
+
+// Gère la création d'un nouveau produit  
+function handleProductCreated(message) {
+  showForm.value = false  
+  productListKey.value++
+  if (message) showNotification(message)
+}
+
+// Gère la création d'un nouvel entrepôt
+function handleWarehouseCreated(message) {
+  showForm.value = false
+  warehouseListKey.value++
+  if (message) showNotification(message)
+}
+
+function handleWarehouseUpdated(message) {
+  showForm.value = false
+  warehouseListKey.value++
+  if (message) showNotification(message)
+}
+
+function handleWarehouseDeleted(message) {
+  if (message) showNotification(message)
+}
+
+
 </script>
 
 <template>
@@ -58,6 +93,9 @@ function handleProductCreated() {
     <Sidebar :active-view="activeView" @change-view="changeView" @logout="handleLogout" />
 
     <div class="dashboard-content">
+      <div v-if="notificationMessage" class="notification">
+        {{ notificationMessage }}
+      </div>
       <div class="mobile-topbar">
         <span class="brand-mark" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -128,7 +166,7 @@ function handleProductCreated() {
 
         <template v-else-if="activeView === 'entrepots'">
           <CreateWarehouseForm v-if="showForm" @saved="handleWarehouseCreated" />
-          <WarehouseList v-else :key="warehouseListKey" :search="warehouseSearch" />
+          <WarehouseList v-else :key="warehouseListKey" :search="warehouseSearch" @updated="handleWarehouseUpdated" @deleted="handleWarehouseDeleted" />
         </template>
 
         <template v-else>
@@ -153,8 +191,8 @@ function handleProductCreated() {
               ✕
             </button>
           </div>
-          <CreateProductForm v-if="showForm" @saved="handleProductCreated" />
-          <ProductList v-else :key="productListKey" :search="productSearch" />
+          <CreateProductForm v-if="showForm" @saved="handleProductCreated"/>
+          <ProductList v-else :key="productListKey" :search="productSearch"  @delete="handleDelete" @move="handleMove" @update="handleProductUpdated" />
         </template>
       </main>
     </div>
@@ -316,4 +354,17 @@ function handleProductCreated() {
     width: 100%;
   }
 }
+
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 100px;
+    background-color: #2F5D4E;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    z-index: 1000;
+    opacity: 0.8;
+    transition: opacity 0.5s ease;
+  }
 </style>

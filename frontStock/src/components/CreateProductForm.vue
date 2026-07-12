@@ -11,14 +11,14 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['saved'])
+const emit = defineEmits(['saved', 'updated'])
 
 const isEditMode = !!props.product
 
 // Mêmes valeurs ETAT supposées que dans ProductDetailsModal.vue  à garder synchronisées.
 const ETAT_CHOICES = [
   { value: 'disponible', label: 'Disponible' },
-  { value: 'rupture', label: 'Rupture de stock' },
+  { value: 'reserver', label: 'Réservé' },
   { value: 'perimer', label: 'Périmé' },
 ]
 
@@ -70,7 +70,7 @@ async function handleSubmit() {
   try {
     if (isEditMode) {
       await updateProduct(props.product.id, payload)
-      emit('saved')
+      emit('updated', 'Produit mis à jour avec succès.')
     } else {
       await createProduct(payload)
       name.value = ''
@@ -78,7 +78,7 @@ async function handleSubmit() {
       etat.value = 'disponible'
       dateExpiration.value = ''
       warehouseId.value = ''
-      emit('saved')
+      emit('saved', 'Produit créé avec succès.')
     }
    
   } catch (error) {
@@ -105,7 +105,7 @@ async function handleSubmit() {
 
     <label class="field">
       <span class="field-label">Nom</span>
-      <input v-model="name" type="text" placeholder="Ex. Riz parfumé 5kg" class="input-field" />
+      <input v-model="name" type="text" placeholder="Ex. Ordinateur" class="input-field" />
     </label>
 
     <label class="field">

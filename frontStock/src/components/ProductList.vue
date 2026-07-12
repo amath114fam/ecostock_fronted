@@ -25,6 +25,9 @@ const modalMode = ref(null)
 const isDeleting = ref(false)
 const deleteError = ref('')
 
+const emit = defineEmits(['delete', 'move', 'update'])
+
+
 // Charge les produits et les entrepôts depuis le backend
 async function loadData() {
   try {
@@ -78,9 +81,10 @@ function closeModal() {
 }
 
 // Gère la sauvegarde après l'édition ou la création d'un produit
-function handleSaved() {
+function handleSaved(message) {
   closeModal()
   loadData()
+  if (message) emit('update', message) 
 }
 
 // Confirme la suppression d'un produit
@@ -92,6 +96,7 @@ async function confirmDelete() {
     await deleteProduct(activeProduct.value.id)
     closeModal()
     loadData()
+    emit('delete', 'Produit supprimé avec succès.')
   } catch (error) {
     deleteError.value = 'Erreur lors de la suppression du produit.'
   } finally {
@@ -117,6 +122,7 @@ async function confirmMove() {
     await moveProduct(activeProduct.value.id, targetWarehouseId.value)
     closeModal()
     loadData()
+    emit('move', 'Produit déplacé avec succès.')
   } catch (error) {
     moveError.value = error.message || 'Erreur lors du déplacement du produit.'
   } finally {
@@ -136,6 +142,7 @@ const filteredProducts = computed(() => {
     return nameMatch || warehouseMatch
   })
 })
+
 
 
 </script>
@@ -232,7 +239,7 @@ const filteredProducts = computed(() => {
         />
         <template v-else-if="modalMode === 'edit'">
           <button type="button" class="modal-close" aria-label="Fermer" @click="closeModal">✕</button>
-          <CreateProductForm :product="activeProduct" @saved="handleSaved" />
+          <CreateProductForm :product="activeProduct" @updated="handleSaved"  />
         </template>
         <div v-else-if="modalMode === 'delete'" class="confirm-delete">
           <h2>Supprimer ce produit ?</h2>
@@ -588,5 +595,18 @@ const filteredProducts = computed(() => {
 .btn-primary:disabled {
   background-color: #a8b8b3;
   cursor: not-allowed;
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #2F5D4E;
+  color: white;
+  padding: 15px;
+  border-radius: 5px;
+  z-index: 1000;
+  opacity: 0.95;
+  transition: opacity 0.5s ease;
 }
 </style>

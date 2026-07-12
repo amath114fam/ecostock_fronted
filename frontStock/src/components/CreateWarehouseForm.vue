@@ -10,7 +10,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['saved'])
+const emit = defineEmits(['saved', 'updated'])
 
 const isEditMode = !!props.warehouse
 
@@ -35,13 +35,13 @@ async function handleSubmit() {
   try {
     if (isEditMode) {
       await updateWarehouse(props.warehouse.id, payload)
-      emit('saved')
+      emit('updated', 'Entrepôt mis à jour avec succès.')
     } else {
       await createWarehouse(payload)
       name.value = ''
       location.value = ''
       capacity.value = ''
-      emit('saved')
+      emit('saved', 'Entrepôt créé avec succès.')
     }
   } catch (error) {
     console.error('Erreur détaillée:', error)

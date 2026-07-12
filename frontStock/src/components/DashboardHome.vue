@@ -52,7 +52,7 @@ const availableCount = computed(
 )
 
 const outOfStockCount = computed(
-  () => products.value.filter((product) => product.etat === 'rupture').length
+  () => products.value.filter((product) => product.etat === 'reserver').length
 )
 
 const expiredCount = computed(
@@ -76,8 +76,8 @@ const summaryCards = computed(() => [
     icon: 'check',
   },
   {
-    key: 'rupture',
-    label: 'Produits en rupture',
+    key: 'reserver',
+    label: 'Produits réservés',
     value: outOfStockCount.value,
     tone: 'warning',
     icon: 'alert',
@@ -103,7 +103,7 @@ const warehouseStats = computed(() =>
       nom: warehouse.nom,
       total: warehouseProducts.length,
       disponible: warehouseProducts.filter((p) => p.etat === 'disponible').length,
-      rupture: warehouseProducts.filter((p) => p.etat === 'rupture').length,
+      reserver: warehouseProducts.filter((p) => p.etat === 'reserver').length,
       perime: warehouseProducts.filter((p) => p.etat === 'perimer').length,
     }
   })
@@ -119,9 +119,9 @@ const chartData = computed(() => ({
       data: warehouseStats.value.map((w) => w.disponible),
     },
     {
-      label: 'En rupture',
+      label: 'Réservés',
       backgroundColor: '#d8a24a',
-      data: warehouseStats.value.map((w) => w.rupture),
+      data: warehouseStats.value.map((w) => w.reserver),
     },
     {
       label: 'Périmés',
