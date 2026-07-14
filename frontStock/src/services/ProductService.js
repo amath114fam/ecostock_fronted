@@ -1,6 +1,6 @@
 import { authFetch } from './authService.js'
+import { API_URL } from './config.js'
 
-const API_URL = 'http://localhost:8000/api'
 
 // Récupère la liste des produits depuis l'API
 export async function fetchProducts() {

@@ -1,7 +1,5 @@
 import { authFetch } from './authService.js'
-
-const API_URL = 'http://localhost:8000/api'
-
+import { API_URL } from './config.js'
 // Récupère la liste des entrepôts depuis l'API
 export async function fetchWarehouses() {
   try {

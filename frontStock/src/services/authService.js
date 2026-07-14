@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000/api'
+import { API_URL } from './config.js'
 
 //connecte l'utilisateur en envoyant les identifiants à l'API et stocke les tokens dans le localStorage
 export async function login(username, password) {
