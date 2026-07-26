@@ -195,6 +195,7 @@ const filteredProducts = computed(() => {
             <button
                 type="button"
                 class="icon-btn"
+                :disabled="product.etat === 'perimer'"
                 title="Déplacer vers un autre entrepôt"
                 aria-label="Déplacer"
                 @click="openMoveConfirm(product)"
@@ -608,5 +609,10 @@ const filteredProducts = computed(() => {
   z-index: 1000;
   opacity: 0.95;
   transition: opacity 0.5s ease;
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>

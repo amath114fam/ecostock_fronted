@@ -10,7 +10,7 @@ import CreateProductForm from './components/CreateProductForm.vue'
 import { getAccessToken, logout } from './services/authService.js'
 
 const isAuthenticated = ref(!!getAccessToken())
-const activeView = ref('dashboard') // 'dashboard' | 'entrepots' | 'produits'
+const activeView = ref('dashboard') 
 const showForm = ref(false)
 const warehouseListKey = ref(0)
 const productListKey = ref(0)
